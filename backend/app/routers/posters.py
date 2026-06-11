@@ -1,69 +1,219 @@
-from fastapi import APIRouter, UploadFile, File, Form, Depends
-from db import get_connection
+from fastapi import (
+    APIRouter,
+    UploadFile,
+    File,
+    Form,
+    HTTPException
+)
+
+from bson import ObjectId
+
+from db import posters_collection
+from db import sections_collection
+
+from utils.file_utils import (
+    validate_poster_file,
+    validate_audio_file,
+    save_upload_file
+)
+
+from utils.qr import generate_qr_code
+
+from datetime import datetime
+from db import get_next_sequence
+import uuid
+import os
 
 
-router = APIRouter(prefix="/api/posters", tags=["Posters"])
+router = APIRouter(
+    prefix="/api/posters",
+    tags=["Posters"]
+)
 
 
 @router.get("")
 def get_posters():
 
-    conn = get_connection()
-    cur = conn.cursor()
+    posters = []
 
-    cur.execute("""
-        SELECT * FROM posters
-        ORDER BY created_at DESC
-    """)
+    for poster in posters_collection.find():
 
-    rows = cur.fetchall()
+        poster["id"] = str(
+            poster["_id"]
+        )
 
-    cur.close()
-    conn.close()
+        del poster["_id"]
 
-    return rows
+        posters.append(
+            poster
+        )
+
+    return posters
 
 
-@router.post("")
-def create_poster(
-    slug: str = Form(...),
-    title: str = Form(...),
-    description: str = Form(""),
-    poster_file: UploadFile = File(...),
-    audio_file: UploadFile = File(...),
-    
+@router.get("/{poster_id}")
+def get_poster(
+    poster_id: str
 ):
 
-    conn = get_connection()
-    cur = conn.cursor()
+    poster = posters_collection.find_one({
+        "_id": ObjectId(
+            poster_id
+        )
+    })
 
-    cur.execute("""
-        INSERT INTO posters (slug, title, description)
-        VALUES (%s, %s, %s)
-        RETURNING id, slug, title, description
-    """, (slug, title, description))
+    if not poster:
 
-    poster = cur.fetchone()
+        raise HTTPException(
+            status_code=404,
+            detail="Poster not found"
+        )
 
-    conn.commit()
-    cur.close()
-    conn.close()
+    poster["id"] = str(
+        poster["_id"]
+    )
 
-    return {"message": "Poster created", "poster": poster}
+    del poster["_id"]
 
+    return poster
 
+@router.post("")
+async def create_poster(
+
+    slug: str = Form(...),
+
+    title: str = Form(...),
+
+    description: str = Form(""),
+
+    poster_file: UploadFile = File(...),
+
+    audio_file: UploadFile = File(...)
+):
+
+    validate_poster_file(
+        poster_file
+    )
+
+    validate_audio_file(
+        audio_file
+    )
+
+    poster_path = await save_upload_file(
+        poster_file,
+        "uploads/posters"
+    )
+
+    audio_path = await save_upload_file(
+        audio_file,
+        "uploads/audio"
+    )
+
+    qr_filename = (
+        f"{uuid.uuid4()}.png"
+    )
+
+    qr_path = os.path.join(
+        "uploads/qrcodes",
+        qr_filename
+    )
+
+    generate_qr_code(
+        f"/poster/{slug}",
+        qr_path
+    )
+
+    poster_id = get_next_sequence(
+        "poster_id"
+    )
+
+    result = posters_collection.insert_one({
+
+        "poster_id": poster_id,
+
+        "slug": slug,
+
+        "title": title,
+
+        "description": description,
+
+        "poster_file": poster_path,
+
+        "audio_file": audio_path,
+
+        "qr_file": qr_path,
+
+        "status": "ACTIVE",
+
+        "created_at": datetime.utcnow()
+    })
+
+    return {
+
+        "message": "Poster created",
+
+        "poster_id": poster_id,
+
+        "mongo_id": str(
+            result.inserted_id
+        )
+    }
 @router.delete("/{poster_id}")
-def delete_poster(poster_id: str, ):
+def delete_poster(
+    poster_id: str
+):
 
-    conn = get_connection()
-    cur = conn.cursor()
+    poster = posters_collection.find_one({
 
-    cur.execute("""
-        DELETE FROM posters WHERE id = %s
-    """, (poster_id,))
+        "_id": ObjectId(
+            poster_id
+        )
+    })
 
-    conn.commit()
-    cur.close()
-    conn.close()
+    if not poster:
 
-    return {"message": "Poster deleted"}
+        raise HTTPException(
+            status_code=404,
+            detail="Poster not found"
+        )
+
+    for path in [
+
+        poster.get(
+            "poster_file"
+        ),
+
+        poster.get(
+            "audio_file"
+        ),
+
+        poster.get(
+            "qr_file"
+        )
+    ]:
+
+        if (
+            path and
+            os.path.exists(path)
+        ):
+
+            os.remove(
+                path
+            )
+
+    sections_collection.delete_many({
+
+        "poster_id": poster_id
+    })
+
+    posters_collection.delete_one({
+
+        "_id": ObjectId(
+            poster_id
+        )
+    })
+
+    return {
+
+        "message": "Poster deleted"
+    }

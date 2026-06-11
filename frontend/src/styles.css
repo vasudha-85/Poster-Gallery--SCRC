@@ -2,4 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+html,body,#root{height:100%}
+body{@apply bg-[#0b1116] font-sans;}
+
+.card-bg{background:linear-gradient(180deg,#0f1b22 0%, #071217 100%)}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body { font-family: Inter, Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif; }

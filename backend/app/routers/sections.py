@@ -1,96 +1,138 @@
-from fastapi import APIRouter, Depends
-from db import get_connection
-from schemas.section import SectionCreate
+from fastapi import (
+    APIRouter,
+    HTTPException
+)
+
+from bson import ObjectId
+
+from db import sections_collection
+
+from schemas.section import (
+    SectionCreate
+)
 
 
-router = APIRouter(prefix="/api/sections", tags=["Sections"])
+router = APIRouter(
+    prefix="/api/sections",
+    tags=["Sections"]
+)
 
 
 @router.get("/{poster_id}")
-def get_sections(poster_id: str):
+def get_sections(
+    poster_id: str
+):
 
-    conn = get_connection()
-    cur = conn.cursor()
+    sections = []
 
-    cur.execute("""
-        SELECT * FROM sections
-        WHERE poster_id = %s
-        ORDER BY start_time
-    """, (poster_id,))
+    cursor = sections_collection.find({
 
-    rows = cur.fetchall()
+        "poster_id": poster_id
 
-    cur.close()
-    conn.close()
+    }).sort(
+        "display_order",
+        1
+    )
 
-    return rows
+    for section in cursor:
+
+        section["id"] = str(
+            section["_id"]
+        )
+
+        del section["_id"]
+
+        sections.append(
+            section
+        )
+
+    return sections
 
 
 @router.post("/{poster_id}")
 def create_section(
+
     poster_id: str,
-    payload: SectionCreate,
-    
+
+    payload: SectionCreate
 ):
 
-    conn = get_connection()
-    cur = conn.cursor()
+    result = sections_collection.insert_one({
 
-    cur.execute("""
-        INSERT INTO sections (
-            poster_id,
-            section_name,
-            shape,
-            x,
-            y,
-            width,
-            height,
-            radius,
-            color,
-            opacity,
-            start_time,
-            end_time,
-            display_order
-        )
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        RETURNING *
-    """, (
-        poster_id,
-        payload.section_name,
-        payload.shape,
-        payload.x,
-        payload.y,
-        payload.width,
-        payload.height,
-        payload.radius,
-        payload.color,
-        payload.opacity,
-        payload.start_time,
-        payload.end_time,
-        payload.display_order
-    ))
+        "poster_id": poster_id,
 
-    row = cur.fetchone()
+        "section_name":
+            payload.section_name,
 
-    conn.commit()
-    cur.close()
-    conn.close()
+        "shape":
+            payload.shape,
 
-    return row
+        "x":
+            payload.x,
+
+        "y":
+            payload.y,
+
+        "width":
+            payload.width,
+
+        "height":
+            payload.height,
+
+        "radius":
+            payload.radius,
+
+        "color":
+            payload.color,
+
+        "opacity":
+            payload.opacity,
+
+        "start_time":
+            payload.start_time,
+
+        "end_time":
+            payload.end_time,
+
+        "display_order":
+            payload.display_order
+    })
+
+    return {
+
+        "message":
+            "Section created",
+
+        "section_id":
+            str(
+                result.inserted_id
+            )
+    }
 
 
 @router.delete("/{section_id}")
-def delete_section(section_id: str):
+def delete_section(
+    section_id: str
+):
 
-    conn = get_connection()
-    cur = conn.cursor()
+    result = sections_collection.delete_one({
 
-    cur.execute("""
-        DELETE FROM sections WHERE id = %s
-    """, (section_id,))
+        "_id": ObjectId(
+            section_id
+        )
+    })
 
-    conn.commit()
-    cur.close()
-    conn.close()
+    if result.deleted_count == 0:
 
-    return {"message": "Section deleted"}
+        raise HTTPException(
+
+            status_code=404,
+
+            detail="Section not found"
+        )
+
+    return {
+
+        "message":
+            "Section deleted"
+    }
