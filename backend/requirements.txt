@@ -1,0 +1,10 @@
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+python-dotenv>=1.0.0
+python-multipart>=0.0.20
+pymongo>=4.8.0
+python-jose[cryptography]>=3.3.0
+PyMuPDF>=1.24.0
+qrcode[pil]>=8.0
+Pillow>=10.0.0
+aiofiles>=24.0.0

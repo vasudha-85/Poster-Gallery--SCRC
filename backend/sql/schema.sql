@@ -56,14 +56,14 @@ CREATE TABLE IF NOT EXISTS sections (
   radius NUMERIC NULL CHECK (radius >= 0),
   color TEXT DEFAULT '#0ea5e9',
   opacity NUMERIC DEFAULT 0.4 CHECK (opacity >= 0 AND opacity <= 1),
-  start_time NUMERIC NOT NULL CHECK (start_time >= 0),
-  end_time NUMERIC NOT NULL CHECK (end_time >= 0 AND end_time >= start_time),
+  startTime NUMERIC NOT NULL CHECK (startTime >= 0),
+  endTime NUMERIC NOT NULL CHECK (endTime >= 0 AND endTime >= startTime),
   display_order INT NOT NULL DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS ix_sections_poster_id ON sections(poster_id);
 CREATE INDEX IF NOT EXISTS ix_sections_display_order ON sections(poster_id, display_order);
-CREATE INDEX IF NOT EXISTS ix_sections_start_time ON sections(poster_id, start_time);
+CREATE INDEX IF NOT EXISTS ix_sections_startTime ON sections(poster_id, startTime);
 
 -- Audit actions
 DO $$ BEGIN

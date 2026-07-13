@@ -6,7 +6,7 @@ from typing import Optional
 
 
 class SectionCreate(BaseModel):
-
+    id: Optional[str] = None
     section_name: str = Field(
         min_length=1,
         max_length=255
@@ -26,9 +26,9 @@ class SectionCreate(BaseModel):
 
     opacity: float = 0.4
 
-    start_time: float
+    startTime: float
 
-    end_time: float
+    endTime: float
 
     display_order: int = 1
 
@@ -90,25 +90,25 @@ class SectionCreate(BaseModel):
 
         return value
 
-    @field_validator("end_time")
+    @field_validator("endTime")
     @classmethod
-    def validate_end_time(
+    def validate_endTime(
         cls,
         value,
         info
     ):
 
-        start_time = info.data.get(
-            "start_time"
+        startTime = info.data.get(
+            "startTime"
         )
 
         if (
-            start_time is not None
-            and value <= start_time
+            startTime is not None
+            and value <= startTime
         ):
 
             raise ValueError(
-                "end_time must be greater than start_time"
+                "endTime must be greater than startTime"
             )
 
         return value
@@ -138,9 +138,9 @@ class SectionResponse(BaseModel):
 
     opacity: float
 
-    start_time: float
+    startTime: float
 
-    end_time: float
+    endTime: float
 
     display_order: int
 
@@ -165,8 +165,8 @@ class SectionUpdate(BaseModel):
 
     opacity: Optional[float] = None
 
-    start_time: Optional[float] = None
+    startTime: Optional[float] = None
 
-    end_time: Optional[float] = None
+    endTime: Optional[float] = None
 
     display_order: Optional[int] = None

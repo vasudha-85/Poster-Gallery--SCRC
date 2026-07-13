@@ -3,7 +3,7 @@ from jose import jwt
 import os
 from datetime import datetime, timedelta
 
-router = APIRouter(prefix="/api/auth", tags=["Auth"])
+router = APIRouter(tags=["Auth"])
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")

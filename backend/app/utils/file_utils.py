@@ -3,7 +3,7 @@ import uuid
 
 from fastapi import UploadFile
 from fastapi import HTTPException
-
+import fitz
 
 IMAGE_EXTENSIONS = {
     ".png",
@@ -15,12 +15,14 @@ PDF_EXTENSIONS = {
     ".pdf"
 }
 
+# Removed .mp3, .wav, and .aac -> added .mp4 and .m4a
 AUDIO_EXTENSIONS = {
     ".mp3",
     ".wav",
-    ".aac"
+    ".aac",
+    ".m4a",
+    ".mp4"
 }
-
 
 def get_extension(
     filename: str
@@ -68,8 +70,8 @@ def validate_audio_file(
         raise HTTPException(
             status_code=400,
             detail=(
-                "Audio must be "
-                "MP3, WAV or AAC"
+                "Audio must be MP3, WAV, AAC, M4A, or MP4"
+                
             )
         )
 
@@ -105,7 +107,7 @@ async def save_upload_file(
     file_path = os.path.join(
         folder,
         safe_name
-    )
+    ).replace("\\", "/")
 
     contents = await file.read()
 
@@ -117,3 +119,32 @@ async def save_upload_file(
         f.write(contents)
 
     return file_path
+
+
+def generate_pdf_thumbnail(
+    pdf_path: str,
+    thumbnail_path: str
+):
+
+    document = fitz.open(
+        pdf_path
+    )
+
+    page = document.load_page(
+        0
+    )
+
+    pix = page.get_pixmap(
+        matrix=fitz.Matrix(
+            2,
+            2
+        )
+    )
+
+    pix.save(
+        thumbnail_path
+    )
+
+    document.close()
+
+    return thumbnail_path
