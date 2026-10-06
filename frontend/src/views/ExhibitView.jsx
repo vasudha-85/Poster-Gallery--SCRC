@@ -9,7 +9,7 @@ export default function ExhibitView({ exhibit, onBack }) {
     <div className="p-6 flex flex-col h-screen bg-[#0B0F19]">
       <header className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="p-2 bg-[#131926] border border-[#1F293D] rounded-xl hover:bg-[#1E293B] transition text-white">
+          <button type="button" aria-label="Back to gallery" onClick={onBack} className="p-2 bg-[#131926] border border-[#1F293D] rounded-xl hover:bg-[#1E293B] transition text-white">
             <ArrowLeft size={16} />
           </button>
           <div>
@@ -29,10 +29,11 @@ export default function ExhibitView({ exhibit, onBack }) {
           
           <div className="w-full h-full relative max-w-2xl aspect-[4/3] bg-gradient-to-b from-[#111622] to-[#0D111A] border border-slate-800 rounded-xl shadow-2xl">
             {exhibit?.sections?.map((sec, idx) => (
-              <div
+              <button
+                type="button"
                 key={idx}
                 onClick={() => setCurrentSection(sec)}
-                className={`absolute cursor-pointer flex flex-col items-center justify-center transition-all ${sec.type === 'Circle' ? 'rounded-full' : 'rounded-lg'} ${currentSection?.name === sec.name ? 'ring-2 ring-white scale-[1.02] shadow-2xl' : 'opacity-70'}`}
+                className={`absolute appearance-none p-0 text-inherit cursor-pointer flex flex-col items-center justify-center transition-all ${sec.type === 'Circle' ? 'rounded-full' : 'rounded-lg'} ${currentSection?.name === sec.name ? 'ring-2 ring-white scale-[1.02] shadow-2xl' : 'opacity-70'}`}
                 style={{
                   left: `${sec.x}%`,
                   top: `${sec.y}%`,
@@ -45,7 +46,7 @@ export default function ExhibitView({ exhibit, onBack }) {
                 <span className="text-xs font-bold px-2 py-0.5 rounded bg-black/60 backdrop-blur-sm border border-white/5" style={{ color: sec.color }}>
                   {sec.name}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
           <span className="absolute bottom-4 right-4 text-[10px] tracking-widest font-mono text-gray-500 uppercase bg-black/30 px-2 py-1 rounded border border-white/5">{exhibit.zones} zones</span>
@@ -72,7 +73,7 @@ export default function ExhibitView({ exhibit, onBack }) {
 
             <div className="flex items-center justify-center gap-6 mb-2">
               <button className="text-gray-400 hover:text-white transition"><SkipBack size={18} /></button>
-              <button onClick={() => setIsPlaying(!isPlaying)} className="w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg transition">
+              <button type="button" aria-label={isPlaying ? 'Pause audio' : 'Play audio'} onClick={() => setIsPlaying(!isPlaying)} className="w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg transition">
                 {isPlaying ? <Pause size={20} fill="white" /> : <Play size={20} fill="white" className="ml-0.5" />}
               </button>
               <button className="text-gray-400 hover:text-white transition"><SkipForward size={18} /></button>
@@ -84,10 +85,11 @@ export default function ExhibitView({ exhibit, onBack }) {
             <h4 className="text-xs font-bold tracking-widest uppercase text-gray-400 mb-3">Timeline Chapters</h4>
             <div className="space-y-2 overflow-y-auto flex-1 pr-1">
               {exhibit?.sections?.map((sec, i) => (
-                <div
+                <button
+                  type="button"
                   key={i}
                   onClick={() => setCurrentSection(sec)}
-                  className={`w-full text-left p-3.5 rounded-xl border transition cursor-pointer flex items-center justify-between ${currentSection?.name === sec.name ? 'bg-blue-600/10 border-blue-500/40 text-white' : 'bg-[#0E1322] border-[#1F293D] text-gray-400 hover:border-gray-700'}`}
+                  className={`appearance-none w-full text-left p-3.5 rounded-xl border transition cursor-pointer flex items-center justify-between ${currentSection?.name === sec.name ? 'bg-blue-600/10 border-blue-500/40 text-white' : 'bg-[#0E1322] border-[#1F293D] text-gray-400 hover:border-gray-700'}`}
                 >
                   <div className="flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: sec.color }}></span>
@@ -97,7 +99,7 @@ export default function ExhibitView({ exhibit, onBack }) {
                     </div>
                   </div>
                   {currentSection?.name === sec.name && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>}
-                </div>
+                </button>
               ))}
             </div>
           </div>

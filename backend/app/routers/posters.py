@@ -16,7 +16,7 @@ from app.utils.file_utils import (
 )
 from app.utils.qr import generate_qr_code
 from app.utils.pdf_thumbnail import generate_pdf_thumbnail
-from datetime import datetime
+from datetime import datetime, timezone
 from app.db import get_next_sequence
 import uuid
 import os
@@ -231,7 +231,7 @@ async def create_poster(
         "qr_file": qr_path,
         "thumbnail_file": thumbnail_path,
         "status": "ACTIVE",
-        "created_at": datetime.utcnow()
+        "created_at": datetime.now(timezone.utc)
     })
 
     return {

@@ -1,0 +1,182 @@
+pipeline {
+    agent {
+        label 'scrc-staging'
+    }
+
+    options {
+        timestamps()
+        timeout(time: 45, unit: 'MINUTES')
+        skipDefaultCheckout(true)
+    }
+
+    stages {
+        stage('SCM Checkout') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/development']],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/vasudha-85/Poster-Gallery--SCRC.git',
+                        credentialsId: 'SmartCityOrganisation-GitHubApp'
+                    ]]
+                ])
+            }
+        }
+
+        stage('Verify Repository') {
+            steps {
+                sh '''
+                    set -eu
+                    echo "Branch: $(git branch --show-current)"
+                    echo "Commit: $(git rev-parse --short HEAD)"
+                    test -f backend/main.py
+                    test -f backend/requirements.txt
+                    test -d backend/tests
+                    test -f frontend/package.json
+                    test -f frontend/package-lock.json
+                    test -f sonar-project.properties
+                    echo "Poster Gallery repository verified."
+                '''
+            }
+        }
+
+        stage('Setup Backend') {
+            steps {
+                sh '''
+                    set -eu
+                    python3.13 -m venv backend/.venv
+                    backend/.venv/bin/python -m pip install --upgrade pip
+                    backend/.venv/bin/python -m pip install -r backend/requirements.txt pytest pytest-cov
+                '''
+            }
+        }
+
+        stage('Unit Tests') {
+            parallel {
+                stage('Backend Tests') {
+                    steps {
+                        sh '''
+                            set -eu
+                            cd backend
+                            .venv/bin/python -m pytest -v \
+                                --junitxml=backend-test-results.xml \
+                                --cov=. \
+                                --cov-report=term-missing \
+                                --cov-report=xml:backend-coverage.xml
+                        '''
+                    }
+                    post {
+                        always {
+                            junit testResults: 'backend/backend-test-results.xml', allowEmptyResults: true
+                            archiveArtifacts artifacts: 'backend/backend-coverage.xml', allowEmptyArchive: true
+                        }
+                    }
+                }
+
+                stage('Frontend Tests') {
+                    steps {
+                        sh '''
+                            set -eu
+                            cd frontend
+                            npm ci
+                            npm run test:coverage -- \
+                                --reporter=default \
+                                --reporter=junit \
+                                --outputFile=./test-results.xml
+                        '''
+                    }
+                    post {
+                        always {
+                            junit testResults: 'frontend/test-results.xml', allowEmptyResults: true
+                            archiveArtifacts artifacts: 'frontend/coverage/lcov.info', allowEmptyArchive: true
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh '''
+                    set -eu
+                    cd frontend
+                    npm run build
+                    cd ..
+                    docker build \
+                        --tag "poster-gallery-backend:${BUILD_NUMBER}" \
+                        --file backend/Dockerfile \
+                        backend
+                '''
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: 'frontend/dist/**', allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube Intranet') {
+                    withCredentials([
+                        string(credentialsId: 'sonarqube-global-analysis-token', variable: 'SONAR_TOKEN')
+                    ]) {
+                        sh '''
+                            set +x
+                            sonar-scanner -Dsonar.token="$SONAR_TOKEN"
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate(abortPipeline: true)
+                }
+            }
+        }
+
+        stage('Create PR to Testing') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'Smart-City-GitHub-Token', variable: 'GITHUB_TOKEN')
+                ]) {
+                    sh '''
+                        set +x
+                        export GH_TOKEN="$GITHUB_TOKEN"
+                        REPO="vasudha-85/Poster-Gallery--SCRC"
+                        EXISTING_PR=$(gh pr list \
+                            --repo "$REPO" \
+                            --base testing \
+                            --head development \
+                            --state open \
+                            --json number \
+                            --jq '.[0].number // empty')
+
+                        if [ -n "$EXISTING_PR" ]; then
+                            echo "Development-to-testing PR already exists: #$EXISTING_PR"
+                        else
+                            gh pr create \
+                                --repo "$REPO" \
+                                --base testing \
+                                --head development \
+                                --title "Poster Gallery: development to testing" \
+                                --body "Automated PR created after Poster Gallery tests, build, and SonarQube quality gate passed."
+                        fi
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Poster Gallery development pipeline completed successfully.'
+        }
+        failure {
+            echo 'Poster Gallery development pipeline failed.'
+        }
+    }
+}

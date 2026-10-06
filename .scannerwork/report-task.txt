@@ -1,0 +1,6 @@
+projectKey=poster
+serverUrl=http://10.1.85.63:9000
+serverVersion=26.9.0.129388
+dashboardUrl=http://10.1.85.63:9000/dashboard?id=poster
+ceTaskId=c065e17a-439e-4154-a8f3-6f21332a997b
+ceTaskUrl=http://10.1.85.63:9000/api/ce/task?id=c065e17a-439e-4154-a8f3-6f21332a997b

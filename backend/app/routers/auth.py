@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Form
 from jose import jwt
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 router = APIRouter(tags=["Auth"])
 
@@ -18,7 +18,7 @@ def login(username: str = Form(...), password: str = Form(...)):
     if username != ADMIN_USERNAME or password != ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_EXPIRE)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_EXPIRE)
     to_encode = {"sub": username, "exp": expire}
     token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 

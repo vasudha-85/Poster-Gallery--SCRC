@@ -4,5 +4,14 @@ __pycache__/
 *.pyd
 *.log
 .env
+.env.*
 uploads/
 .git/
+tests/
+.coverage
+backend-coverage.xml
+coverage/
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx

@@ -1,5 +1,6 @@
 import os
 import uuid
+import anyio
 
 from fastapi import UploadFile
 from fastapi import HTTPException
@@ -111,12 +112,8 @@ async def save_upload_file(
 
     contents = await file.read()
 
-    with open(
-        file_path,
-        "wb"
-    ) as f:
-
-        f.write(contents)
+    async with await anyio.open_file(file_path, "wb") as f:
+        await f.write(contents)
 
     return file_path
 

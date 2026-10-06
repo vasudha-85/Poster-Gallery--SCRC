@@ -39,10 +39,11 @@ export default function CanvasEditor({ exhibit, onSave, onCancel }) {
             <h4 className="text-[10px] font-bold tracking-widest uppercase text-gray-500 mb-3">Sections ({sections.length})</h4>
             <div className="space-y-1.5 overflow-y-auto flex-1 pr-1">
               {sections.map((sec, idx) => (
-                <div
+                <button
+                  type="button"
                   key={idx}
                   onClick={() => setSelectedSection(sec)}
-                  className={`group w-full text-left px-3 py-2.5 rounded-xl border transition cursor-pointer flex items-center justify-between ${selectedSection?.name === sec.name ? 'bg-emerald-500/10 border-emerald-500/30 text-white' : 'bg-[#131926]/50 border-transparent text-gray-400 hover:border-[#1F293D]'}`}
+                  className={`group appearance-none w-full text-left px-3 py-2.5 rounded-xl border transition cursor-pointer flex items-center justify-between ${selectedSection?.name === sec.name ? 'bg-emerald-500/10 border-emerald-500/30 text-white' : 'bg-[#131926]/50 border-transparent text-gray-400 hover:border-[#1F293D]'}`}
                 >
                   <div className="flex items-center gap-2.5 truncate">
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: sec.color }}></span>
@@ -52,7 +53,7 @@ export default function CanvasEditor({ exhibit, onSave, onCancel }) {
                     </div>
                   </div>
                   <X size={12} className="text-gray-600 hover:text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -67,10 +68,11 @@ export default function CanvasEditor({ exhibit, onSave, onCancel }) {
           
           <div className="w-full h-full max-w-xl aspect-[3.5/4] bg-gradient-to-b from-[#111726] to-[#0D121F] border border-[#1F293D] rounded-2xl shadow-2xl relative p-4">
             {sections.map((sec, idx) => (
-              <div
+              <button
+                type="button"
                 key={idx}
                 onClick={() => setSelectedSection(sec)}
-                className={`absolute flex flex-col items-center justify-center transition-all ${sec.type === 'Circle' ? 'rounded-full' : 'rounded-lg'} ${selectedSection?.name === sec.name ? 'ring-2 ring-emerald-400 scale-[1.01] shadow-2xl z-20' : 'opacity-60 hover:opacity-80 z-10'}`}
+                className={`absolute appearance-none p-0 text-inherit flex flex-col items-center justify-center transition-all ${sec.type === 'Circle' ? 'rounded-full' : 'rounded-lg'} ${selectedSection?.name === sec.name ? 'ring-2 ring-emerald-400 scale-[1.01] shadow-2xl z-20' : 'opacity-60 hover:opacity-80 z-10'}`}
                 style={{
                   left: `${sec.x}%`,
                   top: `${sec.y}%`,
@@ -91,7 +93,7 @@ export default function CanvasEditor({ exhibit, onSave, onCancel }) {
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm border border-white/5" style={{ color: sec.color }}>
                   {sec.name}
                 </span>
-              </div>
+              </button>
             ))}
             <span className="absolute bottom-3 right-4 text-[9px] font-mono text-gray-600 uppercase tracking-widest">5 zones</span>
           </div>
@@ -107,8 +109,9 @@ export default function CanvasEditor({ exhibit, onSave, onCancel }) {
           {selectedSection ? (
             <div className="space-y-4 text-xs font-medium">
               <div>
-                <label className="block text-gray-400 text-[11px] mb-1.5">Section Label</label>
+                <label htmlFor="section-label" className="block text-gray-400 text-[11px] mb-1.5">Section Label</label>
                 <input
+                  id="section-label"
                   type="text"
                   value={selectedSection.name}
                   onChange={(e) => handleUpdateField('name', e.target.value)}
@@ -117,7 +120,7 @@ export default function CanvasEditor({ exhibit, onSave, onCancel }) {
               </div>
 
               <div>
-                <label className="block text-gray-400 text-[11px] mb-1.5">Shape Type</label>
+                <p className="block text-gray-400 text-[11px] mb-1.5">Shape Type</p>
                 <div className="grid grid-cols-2 gap-2">
                   {['Rect', 'Circle'].map((t) => (
                     <button
@@ -134,11 +137,11 @@ export default function CanvasEditor({ exhibit, onSave, onCancel }) {
 
               <div>
                 <div className="flex justify-between text-gray-400 text-[11px] mb-1">
-                  <span>Time Range</span>
+                  <label htmlFor="time-range">Time Range</label>
                   <span className="font-mono text-blue-400 font-semibold">{selectedSection.start} - {selectedSection.end}</span>
                 </div>
                 <div className="bg-[#0B0F19] p-3 rounded-xl border border-[#1F293D] space-y-2">
-                  <input type="range" min="0" max="100" className="w-full accent-blue-500" />
+                  <input id="time-range" type="range" min="0" max="100" className="w-full accent-blue-500" />
                   <div className="flex justify-between text-[10px] font-mono text-gray-600">
                     <span>0s</span>
                     <span>185s</span>
@@ -147,9 +150,10 @@ export default function CanvasEditor({ exhibit, onSave, onCancel }) {
               </div>
 
               <div>
-                <label className="block text-gray-400 text-[11px] mb-1.5">Border Color</label>
+                <label htmlFor="border-color" className="block text-gray-400 text-[11px] mb-1.5">Border Color</label>
                 <div className="flex items-center gap-3 bg-[#0B0F19] p-2 rounded-xl border border-[#1F293D]">
                   <input
+                    id="border-color"
                     type="color"
                     value={selectedSection.color}
                     onChange={(e) => handleUpdateField('color', e.target.value)}
@@ -160,9 +164,9 @@ export default function CanvasEditor({ exhibit, onSave, onCancel }) {
               </div>
 
               <div>
-                <label className="block text-gray-400 text-[11px] mb-1.5">Background Opacity</label>
+                <label htmlFor="background-opacity" className="block text-gray-400 text-[11px] mb-1.5">Background Opacity</label>
                 <div className="bg-[#0B0F19] p-3 rounded-xl border border-[#1F293D] space-y-1">
-                  <input type="range" min="0" max="100" defaultValue="25" className="w-full accent-emerald-500" />
+                  <input id="background-opacity" type="range" min="0" max="100" defaultValue="25" className="w-full accent-emerald-500" />
                   <div className="flex justify-between text-[10px] text-gray-500 font-mono">
                     <span>0%</span>
                     <span>25%</span>
